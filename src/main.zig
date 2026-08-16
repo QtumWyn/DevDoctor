@@ -5,8 +5,13 @@ const Status = enum {
     fail,
 };
 
+const Category = enum {
+    command,
+    directory,
+};
+
 const CheckResult = struct {
-    category: []const u8,
+    category: Category,
     name: []const u8,
     status: Status,
     detail: []const u8,
@@ -61,7 +66,7 @@ fn commandAvailable(
 fn makeCommandResult(name: []const u8, found: bool) CheckResult {
     if (found) {
         return CheckResult{
-            .category = "Command",
+            .category = .command,
             .name = name,
             .status = .ok,
             .detail = "Command found.",
@@ -69,7 +74,7 @@ fn makeCommandResult(name: []const u8, found: bool) CheckResult {
     }
 
     return CheckResult{
-        .category = "Command",
+        .category = .command,
         .name = name,
         .status = .fail,
         .detail = "Command not found.",
@@ -83,11 +88,18 @@ fn statusLabel(status: Status) []const u8 {
     };
 }
 
+fn categoryLabel(category: Category) []const u8 {
+    return switch (category) {
+        .command => "Command",
+        .directory => "Directory"
+    };
+}
+
 fn printResult(result: CheckResult) void {
     std.debug.print(
         "{s} | {s} | {s} | {s}\n",
         .{
-            result.category,
+            categoryLabel(result.category),
             result.name,
             statusLabel(result.status),
             result.detail,
