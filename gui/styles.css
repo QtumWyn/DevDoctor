@@ -153,3 +153,88 @@ h1 {
         grid-template-columns: 1fr;
     }
 }
+
+[hidden] {
+    display: none;
+}
+
+.check-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.check-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    border: 1px solid #303855;
+    border-left-width: 4px;
+    border-radius: 12px;
+    padding: 16px 18px;
+    background: #151b30;
+}
+
+.check-row.check-passed {
+    border-left-color: #63dfa5;
+}
+
+.check-row.check-failed {
+    border-left-color: #ff788b;
+}
+
+.check-information {
+    min-width: 0;
+}
+
+.check-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.check-category {
+    border-radius: 999px;
+    padding: 4px 8px;
+    background: #2b3351;
+    color: #bfc6e3;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.check-name {
+    overflow-wrap: anywhere;
+}
+
+.check-detail {
+    margin: 7px 0 0;
+    color: #929bb9;
+}
+
+.check-status {
+    flex: 0 0 auto;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.status-ok {
+    background: rgb(99 223 165 / 15%);
+    color: #63dfa5;
+}
+
+.status-fail {
+    background: rgb(255 120 139 / 15%);
+    color: #ff788b;
+}
+
+button:not(:disabled) {
+    cursor: pointer;
+}
+
+button:not(:disabled):hover {
+    background: #9c90ff;
+}

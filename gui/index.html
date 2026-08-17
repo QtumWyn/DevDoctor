@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self'; style-src 'self'"
+            content="default-src 'self'; script-src 'self'; style-src 'self'"
     >
     <meta
             name="viewport"
@@ -26,7 +26,7 @@
             </p>
         </div>
 
-        <button type="button" disabled>
+        <button id="run-button" type="button">
             Run diagnostics
         </button>
     </header>
@@ -34,33 +34,40 @@
     <section class="summary">
         <article>
             <span>Total</span>
-            <strong>—</strong>
+            <strong id="total-count">—</strong>
         </article>
 
         <article class="passed">
             <span>Passed</span>
-            <strong>—</strong>
+            <strong id="passed-count">—</strong>
         </article>
 
         <article class="failed">
             <span>Failed</span>
-            <strong>—</strong>
+            <strong id="failed-count">—</strong>
         </article>
     </section>
 
     <section class="checks">
         <div class="checks-heading">
             <h2>Diagnostic checks</h2>
-            <span>Waiting</span>
+            <span id="run-status">Ready</span>
         </div>
 
-        <div class="empty-state">
-            <p>DevDoctor’s CLI connection comes next.</p>
-            <small>
-                Soon this space will contain real diagnostic results.
+        <div id="empty-state" class="empty-state">
+            <p id="result-message">
+                Ready to inspect this machine.
+            </p>
+
+            <small id="result-detail">
+                Diagnostic results will appear here.
             </small>
         </div>
+
+        <div id="checks-list" class="check-list" hidden></div>
     </section>
 </main>
+<script src="renderer.js"></script>
+
 </body>
 </html>
