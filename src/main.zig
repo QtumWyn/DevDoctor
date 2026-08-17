@@ -1,5 +1,9 @@
 const std = @import("std");
 
+// ==========================================
+// Types
+// ==========================================
+
 const Status = enum {
     ok,
     fail,
@@ -34,9 +38,9 @@ const Report = struct {
     summary: Summary,
 };
 
-fn announceCommand(name: []const u8) void {
-    std.debug.print("Checking {s}...\n", .{name});
-}
+// ==========================================
+// Commands
+// ==========================================
 
 fn commandAvailable(
     io: std.Io,
@@ -81,6 +85,41 @@ fn makeCommandResult(name: []const u8, found: bool) CheckResult {
     };
 }
 
+// ==========================================
+// Directories
+// ==========================================
+
+fn directoryAvailable(
+    io: std.Io,
+    path: []const u8,
+) bool {
+    var directory =
+        std.Io.Dir.cwd().openDir(io, path, .{}) catch return false;
+
+    defer directory.close(io);
+
+    return true;
+}
+
+fn makeDirectoryResult(
+    path: []const u8,
+    available: bool,
+) CheckResult {
+    if (available) {
+        return CheckResult{ .category = .directory, .name = path, .status = .ok, .detail = "Directory found." };
+    }
+
+    return CheckResult{ .category = .directory, .name = path, .status = .fail, .detail = "Directory not found." };
+}
+
+// ==========================================
+// Helpers
+// ==========================================
+
+fn announceCheck(name: []const u8) void {
+    std.debug.print("Checking \"{s}\"...\n", .{name});
+}
+
 fn statusLabel(status: Status) []const u8 {
     return switch (status) {
         .ok => "OK",
@@ -91,9 +130,26 @@ fn statusLabel(status: Status) []const u8 {
 fn categoryLabel(category: Category) []const u8 {
     return switch (category) {
         .command => "Command",
-        .directory => "Directory"
+        .directory => "Directory",
     };
 }
+
+fn hasArgument(
+    args: []const []const u8,
+    wanted: []const u8,
+) bool {
+    for (args[1..]) |argument| {
+        if (std.mem.eql(u8, argument, wanted)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// ==========================================
+// Outputs
+// ==========================================
 
 fn printResult(result: CheckResult) void {
     std.debug.print(
@@ -128,19 +184,6 @@ fn printJsonReport(
     try std.Io.File.stdout().writeStreamingAll(io, "\n");
 }
 
-fn hasArgument(
-    args: []const []const u8,
-    wanted: []const u8,
-) bool {
-    for (args[1..]) |argument| {
-        if (std.mem.eql(u8, argument, wanted)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
     const args = try init.minimal.args.toSlice(init.arena.allocator());
@@ -154,16 +197,33 @@ pub fn main(init: std.process.Init) !void {
         .{ .name = "def-not-a-command", .version_argument = "--version" },
     };
 
-    var results: [cmds.len]CheckResult = undefined;
+    const directories = [_][]const u8{
+        ".",
+        "src",
+        "def-not-a-directory",
+    };
+
+    var results: [cmds.len + directories.len]CheckResult = undefined;
 
     for (cmds, 0..) |cmd, index| {
         if (!json_mode) {
-            announceCommand(cmd.name);
+            announceCheck(cmd.name);
         }
 
         const available = commandAvailable(io, cmd.name, cmd.version_argument);
 
         results[index] = makeCommandResult(cmd.name, available);
+    }
+
+    for (directories, 0..) |path, index| {
+        if (!json_mode) {
+            announceCheck(path);
+        }
+
+        const available = directoryAvailable(io, path);
+
+        results[cmds.len + index] =
+            makeDirectoryResult(path, available);
     }
 
     for (results) |result| {
