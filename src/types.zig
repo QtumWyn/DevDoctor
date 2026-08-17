@@ -20,11 +20,6 @@ pub const CheckResult = struct {
     detail: []const u8,
 };
 
-pub const CommandSpec = struct {
-    name: []const u8,
-    version_argument: []const u8,
-};
-
 pub const Summary = struct {
     total: usize,
     passed: usize,

@@ -1,8 +1,11 @@
-fmt:
-    zig fmt src/main.zig
+run:
+    zig run src/main.zig
 
 json:
     zig run src/main.zig -- --json
 
-run:
-    zig run src/main.zig
+test:
+    zig test src/tests.zig
+
+fmt:
+    zig fmt src

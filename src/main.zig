@@ -2,47 +2,11 @@ const std = @import("std");
 const types = @import("types.zig");
 const command = @import("command.zig");
 const directory = @import("directory.zig");
+const port = @import("port.zig");
+const helpers = @import("helpers.zig");
 
-const Status = types.Status;
-const Category = types.Category;
 const CheckResult = types.CheckResult;
 const Report = types.Report;
-
-// ==========================================
-// Helpers
-// ==========================================
-
-fn announceCheck(name: []const u8) void {
-    std.debug.print("Checking \"{s}\"...\n", .{name});
-}
-
-fn statusLabel(status: Status) []const u8 {
-    return switch (status) {
-        .ok => "OK",
-        .fail => "FAIL",
-    };
-}
-
-fn categoryLabel(category: Category) []const u8 {
-    return switch (category) {
-        .command => "Command",
-        .directory => "Directory",
-        .port => "Port",
-    };
-}
-
-fn hasArgument(
-    args: []const []const u8,
-    wanted: []const u8,
-) bool {
-    for (args[1..]) |argument| {
-        if (std.mem.eql(u8, argument, wanted)) {
-            return true;
-        }
-    }
-
-    return false;
-}
 
 // ==========================================
 // Outputs
@@ -52,9 +16,9 @@ fn printResult(result: CheckResult) void {
     std.debug.print(
         "{s} | {s} | {s} | {s}\n",
         .{
-            categoryLabel(result.category),
+            helpers.categoryLabel(result.category),
             result.name,
-            statusLabel(result.status),
+            helpers.statusLabel(result.status),
             result.detail,
         },
     );
@@ -85,7 +49,7 @@ pub fn main(init: std.process.Init) !void {
     const io = init.io;
     const args = try init.minimal.args.toSlice(init.arena.allocator());
 
-    const json_mode = hasArgument(args, "--json");
+    const json_mode = helpers.hasArgument(args, "--json");
 
     var failure_count: usize = 0;
 
@@ -100,11 +64,24 @@ pub fn main(init: std.process.Init) !void {
         .{ .path = "def-not-a-directory" },
     };
 
-    var results: [cmds.len + directories.len]CheckResult = undefined;
+    const ports = [_]port.Spec{
+        .{
+            .name = "PostgreSQL",
+            .port = 5432,
+            .expected = .listening,
+        },
+        .{
+            .name = "APlus360 Backend",
+            .port = 8080,
+            .expected = .free,
+        },
+    };
+
+    var results: [cmds.len + directories.len + ports.len]CheckResult = undefined;
 
     for (cmds, 0..) |cmd, index| {
         if (!json_mode) {
-            announceCheck(cmd.name);
+            helpers.announceCheck(cmd.name);
         }
 
         results[index] = command.check(io, cmd);
@@ -112,11 +89,20 @@ pub fn main(init: std.process.Init) !void {
 
     for (directories, 0..) |dir, index| {
         if (!json_mode) {
-            announceCheck(dir.path);
+            helpers.announceCheck(dir.path);
         }
 
         results[cmds.len + index] =
             directory.check(io, dir);
+    }
+
+    for (ports, 0..) |port_spec, index| {
+        if (!json_mode) {
+            helpers.announceCheck(port_spec.name);
+        }
+
+        results[cmds.len + directories.len + index] =
+            port.check(io, port_spec);
     }
 
     for (results) |result| {

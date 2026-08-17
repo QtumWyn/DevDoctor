@@ -59,3 +59,32 @@ fn makeCommandResult(name: []const u8, found: bool) CheckResult {
         .detail = "Command not found.",
     };
 }
+
+
+test "found command passes" {
+    const result = makeCommandResult("Test Command", true);
+
+    try std.testing.expectEqual(
+        types.Status.ok,
+        result.status,
+    );
+
+    try std.testing.expectEqualStrings(
+        "Command found.",
+        result.detail,
+    );
+}
+
+test "not found command fails" {
+    const result = makeCommandResult("Test Command", false);
+
+    try std.testing.expectEqual(
+        types.Status.fail,
+        result.status,
+    );
+
+    try std.testing.expectEqualStrings(
+        "Command not found.",
+        result.detail,
+    );
+}
