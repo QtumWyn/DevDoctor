@@ -1,116 +1,12 @@
 const std = @import("std");
+const types = @import("types.zig");
+const command = @import("command.zig");
+const directory = @import("directory.zig");
 
-// ==========================================
-// Types
-// ==========================================
-
-const Status = enum {
-    ok,
-    fail,
-};
-
-const Category = enum {
-    command,
-    directory,
-};
-
-const CheckResult = struct {
-    category: Category,
-    name: []const u8,
-    status: Status,
-    detail: []const u8,
-};
-
-const CommandSpec = struct {
-    name: []const u8,
-    version_argument: []const u8,
-};
-
-const Summary = struct {
-    total: usize,
-    passed: usize,
-    failed: usize,
-};
-
-const Report = struct {
-    schema_version: u8,
-    checks: []const CheckResult,
-    summary: Summary,
-};
-
-// ==========================================
-// Commands
-// ==========================================
-
-fn commandAvailable(
-    io: std.Io,
-    name: []const u8,
-    version_argument: []const u8,
-) bool {
-    const argv = [_][]const u8{
-        name,
-        version_argument,
-    };
-
-    var command = std.process.spawn(io, .{
-        .argv = &argv,
-        .stdin = .ignore,
-        .stdout = .ignore,
-        .stderr = .ignore,
-    }) catch return false;
-
-    const term = command.wait(io) catch return false;
-
-    return switch (term) {
-        .exited => |exit_code| exit_code == 0,
-        else => false,
-    };
-}
-
-fn makeCommandResult(name: []const u8, found: bool) CheckResult {
-    if (found) {
-        return CheckResult{
-            .category = .command,
-            .name = name,
-            .status = .ok,
-            .detail = "Command found.",
-        };
-    }
-
-    return CheckResult{
-        .category = .command,
-        .name = name,
-        .status = .fail,
-        .detail = "Command not found.",
-    };
-}
-
-// ==========================================
-// Directories
-// ==========================================
-
-fn directoryAvailable(
-    io: std.Io,
-    path: []const u8,
-) bool {
-    var directory =
-        std.Io.Dir.cwd().openDir(io, path, .{}) catch return false;
-
-    defer directory.close(io);
-
-    return true;
-}
-
-fn makeDirectoryResult(
-    path: []const u8,
-    available: bool,
-) CheckResult {
-    if (available) {
-        return CheckResult{ .category = .directory, .name = path, .status = .ok, .detail = "Directory found." };
-    }
-
-    return CheckResult{ .category = .directory, .name = path, .status = .fail, .detail = "Directory not found." };
-}
+const Status = types.Status;
+const Category = types.Category;
+const CheckResult = types.CheckResult;
+const Report = types.Report;
 
 // ==========================================
 // Helpers
@@ -131,6 +27,7 @@ fn categoryLabel(category: Category) []const u8 {
     return switch (category) {
         .command => "Command",
         .directory => "Directory",
+        .port => "Port",
     };
 }
 
@@ -192,15 +89,15 @@ pub fn main(init: std.process.Init) !void {
 
     var failure_count: usize = 0;
 
-    const cmds = [_]CommandSpec{
+    const cmds = [_]command.Spec{
         .{ .name = "git", .version_argument = "--version" },
         .{ .name = "def-not-a-command", .version_argument = "--version" },
     };
 
-    const directories = [_][]const u8{
-        ".",
-        "src",
-        "def-not-a-directory",
+    const directories = [_]directory.Spec{
+        .{ .path = "." },
+        .{ .path = "src" },
+        .{ .path = "def-not-a-directory" },
     };
 
     var results: [cmds.len + directories.len]CheckResult = undefined;
@@ -210,20 +107,16 @@ pub fn main(init: std.process.Init) !void {
             announceCheck(cmd.name);
         }
 
-        const available = commandAvailable(io, cmd.name, cmd.version_argument);
-
-        results[index] = makeCommandResult(cmd.name, available);
+        results[index] = command.check(io, cmd);
     }
 
-    for (directories, 0..) |path, index| {
+    for (directories, 0..) |dir, index| {
         if (!json_mode) {
-            announceCheck(path);
+            announceCheck(dir.path);
         }
 
-        const available = directoryAvailable(io, path);
-
         results[cmds.len + index] =
-            makeDirectoryResult(path, available);
+            directory.check(io, dir);
     }
 
     for (results) |result| {
