@@ -2,3 +2,4 @@
 zig-out/
 report.json
 .idea/
+gui/node_modules/
