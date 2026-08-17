@@ -73,9 +73,6 @@ fn makePortResult(
     };
 }
 
-
-
-
 test "listening port fails when free was expected" {
     const result = makePortResult("Test port", .free, true);
 

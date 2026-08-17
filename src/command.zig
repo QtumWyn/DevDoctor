@@ -60,7 +60,6 @@ fn makeCommandResult(name: []const u8, found: bool) CheckResult {
     };
 }
 
-
 test "found command passes" {
     const result = makeCommandResult("Test Command", true);
 
