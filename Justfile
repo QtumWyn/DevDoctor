@@ -1,11 +1,14 @@
 run:
-    zig run src/main.zig
+    zig build run
 
 json:
-    zig run src/main.zig -- --json
+    zig build run -- --json
 
 test:
-    zig test src/tests.zig
+    zig build test --summary all
 
 fmt:
-    zig fmt src
+    zig fmt build.zig src
+
+build:
+    zig build
