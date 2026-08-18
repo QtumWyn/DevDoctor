@@ -1,0 +1,18 @@
+{
+  "commands": [
+    {
+      "name": "zig",
+      "version_argument": "version"
+    },
+    {
+      "name": "zig",
+      "version_argument": "--version"
+    },
+    {
+      "name": "def-not-a-command",
+      "version_argument": "--version"
+    }
+  ],
+  "directories": [],
+  "ports": []
+}

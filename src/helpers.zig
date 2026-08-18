@@ -58,3 +58,50 @@ pub fn argumentValue(
 
     return null;
 }
+
+test "argumentValue returns requested value" {
+    const args = [_][]const u8{
+        "devdoctor",
+        "--json",
+        "--config",
+        "custom.json",
+    };
+
+    const value = try argumentValue(
+        &args,
+        "--config",
+    );
+
+    try std.testing.expect(value != null);
+
+    try std.testing.expectEqualStrings(
+        "custom.json",
+        value.?,
+    );
+}
+
+test "argumentValue returns null when argument is absent" {
+    const args = [_][]const u8{
+        "devdoctor",
+        "--json",
+    };
+
+    const value = try argumentValue(
+        &args,
+        "--config",
+    );
+
+    try std.testing.expect(value == null);
+}
+
+test "argumentValue reports a missing value" {
+    const args = [_][]const u8{
+        "devdoctor",
+        "--config",
+    };
+
+    try std.testing.expectError(
+        error.MissingValue,
+        argumentValue(&args, "--config"),
+    );
+}
