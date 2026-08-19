@@ -36,6 +36,11 @@ fn makeDirectoryResult(
     return CheckResult{ .category = .directory, .name = path, .status = .fail, .detail = "Directory not found." };
 }
 
+// =================================================
+// Tests
+// =================================================
+
+
 test "found directory passes" {
     const result = makeDirectoryResult("Test Directory", true);
 

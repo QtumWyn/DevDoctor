@@ -59,6 +59,11 @@ pub fn argumentValue(
     return null;
 }
 
+// =================================================
+// Tests
+// =================================================
+
+
 test "argumentValue returns requested value" {
     const args = [_][]const u8{
         "devdoctor",

@@ -7,9 +7,11 @@ const CheckResult = types.CheckResult;
 const Report = types.Report;
 
 pub fn printProgress(
+    context: ?*anyopaque,
     category: types.Category,
     name: []const u8,
 ) void {
+    _ = context;
     std.debug.print(
         "Checking {s} \"{s}\"...\n",
         .{

@@ -44,11 +44,14 @@ pub fn main(init: std.process.Init) !void {
 
     const config = parsed_config.value;
 
-    const progress: ?runner.ProgressFn =
+    const progress: ?runner.Progress =
         if (json_mode)
             null
         else
-            &reporting.printProgress;
+            .{
+                .context = null,
+                .callback = &reporting.printProgress,
+            };
 
     const results = try runner.run(
         init.gpa,
