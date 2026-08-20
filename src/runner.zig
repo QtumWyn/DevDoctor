@@ -9,6 +9,7 @@ const CheckResult = types.CheckResult;
 const Config = config_module.Config;
 const Summary = types.Summary;
 const Category = types.Category;
+const CheckSpec = types.CheckSpec;
 
 pub const ProgressFn = *const fn (
     ?*anyopaque,
@@ -27,39 +28,63 @@ pub fn run(
     config: Config,
     progress: ?Progress,
 ) ![]CheckResult {
-    const total_checks: usize =
-        config.commands.len + config.directories.len + config.ports.len;
+    const total_checks: usize = config.specs.len;
 
     const results = try allocator.alloc(CheckResult, total_checks);
 
-    for (config.commands, 0..) |cmd, index| {
-        if (progress) |progress_info| {
-            progress_info.callback(progress_info.context, .command, cmd.name);
+    for (config.specs, 0..) |spec, index| {
+        switch (spec) {
+            .command => |cmd| {
+                if (progress) |progress_info| {
+                    progress_info.callback(progress_info.context, .command, cmd.name);
+                }
+                results[index] = command.check(io, cmd);
+            },
+            .directory => |dir| {
+                if (progress) |progress_info| {
+                    progress_info.callback(progress_info.context, .directory, dir.path);
+                }
+                results[index] = directory.check(io, dir);
+            },
+            .port => |prt| {
+                if (progress) |progress_info| {
+                    progress_info.callback(progress_info.context, .port, prt.name);
+                }
+                results[index] = port.check(io, prt);
+            }
         }
-
-        results[index] = command.check(io, cmd);
-    }
-
-    for (config.directories, 0..) |dir, index| {
-        if (progress) |progress_info| {
-            progress_info.callback(progress_info.context, .directory, dir.path);
-        }
-
-        results[config.commands.len + index] = directory.check(io, dir);
-    }
-
-    for (config.ports, 0..) |port_spec, index| {
-        if (progress) |progress_info| {
-            progress_info.callback(progress_info.context, .port, port_spec.name);
-        }
-
-        results[
-            config.commands.len +
-            config.directories.len +
-            index
-        ] = port.check(io, port_spec);
     }
     return results;
+}
+
+test "run returns all configured checks" {
+    const allocator = std.testing.allocator;
+    const io = std.testing.io;
+
+    const config = Config{
+        .specs = &.{
+            .{
+                .command = .{
+                    .name = "zig",
+                    .version_argument = "version",
+                }
+            },
+            .{
+                .directory = .{
+                    .path = ".",
+                }
+            },
+        }
+    };
+
+    const results = try run(allocator, io, config, null);
+
+    defer allocator.free(results);
+
+    try std.testing.expectEqual(
+        @as(usize, 2),
+        results.len,
+    );
 }
 
 pub fn summarize(results: []const CheckResult) Summary {
@@ -78,60 +103,6 @@ pub fn summarize(results: []const CheckResult) Summary {
         .passed = passed,
         .failed = failed,
     };
-}
-
-// =================================================
-// Tests
-// =================================================
-
-const ProgressState = struct {
-    calls: usize = 0,
-};
-
-fn countProgress(
-    context: ?*anyopaque,
-    category: Category,
-    name: []const u8,
-) void {
-    _ = category;
-    _ = name;
-
-    const raw_context = context orelse unreachable;
-
-    const state: *ProgressState = @ptrCast(@alignCast(raw_context));
-
-    state.calls += 1;
-}
-
-test "run returns all configured checks" {
-    const allocator = std.testing.allocator;
-    const io = std.testing.io;
-
-    const config = Config{
-        .commands = &.{
-            .{
-                .name = "zig",
-                .version_argument = "version",
-            },
-        },
-
-        .directories = &.{
-            .{
-                .path = ".",
-            },
-        },
-
-        .ports = &.{},
-    };
-
-    const results = try run(allocator, io, config, null);
-
-    defer allocator.free(results);
-
-    try std.testing.expectEqual(
-        @as(usize, 2),
-        results.len,
-    );
 }
 
 test "summarize counts passed and failed checks" {
@@ -184,24 +155,42 @@ test "summarize counts passed and failed checks" {
     );
 }
 
+const ProgressState = struct {
+    calls: usize = 0,
+};
+
+fn countProgress(
+    context: ?*anyopaque,
+    category: Category,
+    name: []const u8,
+) void {
+    _ = category;
+    _ = name;
+
+    const raw_context = context orelse unreachable;
+
+    const state: *ProgressState = @ptrCast(@alignCast(raw_context));
+
+    state.calls += 1;
+}
+
 test "run calls progress for every configured check" {
     const allocator = std.testing.allocator;
     const io = std.testing.io;
     const config = Config{
-        .commands = &.{
+        .specs = &.{
             .{
-                .name = "zig",
-                .version_argument = "version",
+                .command = .{
+                    .name = "zig",
+                    .version_argument = "version",
+                }
             },
-        },
-
-        .directories = &.{
             .{
-                .path = ".",
+                .directory = .{
+                    .path = ".",
+                }
             },
-        },
-
-        .ports = &.{},
+        }
     };
 
     var state = ProgressState{};

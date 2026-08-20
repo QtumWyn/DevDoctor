@@ -79,12 +79,6 @@ fn makeCommandResult(name: []const u8, outcome: CommandOutcome) CheckResult {
     };
 }
 
-
-// =================================================
-// Tests
-// =================================================
-
-
 test "found command passes" {
     const result = makeCommandResult("Test Command", .passed);
 

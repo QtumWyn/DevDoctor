@@ -69,3 +69,49 @@ test "CheckSpec works as intended" {
         .port => unreachable,
     }
 }
+
+test "CheckSpec list can contain mixed check types" {
+    const config = [_]CheckSpec{
+        .{
+            .command = .{
+                .name = "zig",
+                .version_argument = "version",
+            },
+        },
+        .{
+            .directory = .{
+                .path = ".",
+            },
+        },
+        .{
+            .port = .{
+                .name = "PostgreSQL",
+                .port = 5432,
+                .expected = .listening,
+            },
+        },
+    };
+
+    for (config) |check| {
+        switch (check) {
+            .command => |cmd| {
+                try std.testing.expectEqualStrings(
+                    "zig",
+                    cmd.name,
+                );
+            },
+            .directory => |dir| {
+                try std.testing.expectEqualStrings(
+                    ".",
+                    dir.path,
+                );
+            },
+            .port => |prt| {
+                try std.testing.expectEqualStrings(
+                    "PostgreSQL",
+                    prt.name,
+                );
+            },
+        }
+    }
+}

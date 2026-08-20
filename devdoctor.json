@@ -1,35 +1,22 @@
 {
-  "commands": [
+  "specs": [
     {
-      "name": "git",
-      "version_argument": "--version"
+      "command": {
+        "name": "zig",
+        "version_argument": "version"
+      }
     },
     {
-      "name": "zig",
-      "version_argument": "version"
-    }
-  ],
-  "directories": [
-    {
-      "path": "."
+      "directory": {
+        "path": "."
+      }
     },
     {
-      "path": "src"
-    },
-    {
-      "path": "def-not-a-directory"
-    }
-  ],
-  "ports": [
-    {
-      "name": "PostgreSQL",
-      "port": 5432,
-      "expected": "listening"
-    },
-    {
-      "name": "APlus360 Backend",
-      "port": 8080,
-      "expected": "free"
+      "port": {
+        "name": "PostgreSQL",
+        "port": 5432,
+        "expected": "listening"
+      }
     }
   ]
 }

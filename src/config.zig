@@ -2,11 +2,12 @@ const std = @import("std");
 const command = @import("command.zig");
 const directory = @import("directory.zig");
 const port = @import("port.zig");
+const types = @import("types.zig");
+
+const CheckSpec = types.CheckSpec;
 
 pub const Config = struct {
-    commands: []const command.Spec,
-    directories: []const directory.Spec,
-    ports: []const port.Spec,
+    specs: []const CheckSpec,
 };
 
 pub fn parse(
