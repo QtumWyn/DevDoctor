@@ -4,10 +4,12 @@ const helpers = @import("helpers.zig");
 const config_module = @import("config.zig");
 const runner = @import("runner.zig");
 const reporting = @import("reporting.zig");
+const lua_state = @import("lua.zig");
 
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
     const args = try init.minimal.args.toSlice(init.arena.allocator());
+    const allocator = init.gpa;
 
     const json_mode = helpers.hasArgument(args, "--json");
 
@@ -82,4 +84,6 @@ pub fn main(init: std.process.Init) !void {
     if (json_mode) {
         try reporting.printJsonReport(io, init.gpa, report);
     }
+
+    try lua_state.loadCommand(allocator);
 }
